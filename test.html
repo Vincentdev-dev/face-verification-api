@@ -1,0 +1,34 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Face Detection Test</title>
+</head>
+<body>
+  <h2>Upload Image for Face Detection</h2>
+
+  <input type="file" id="fileInput" />
+  <button onclick="upload()">Detect Face</button>
+
+  <pre id="result"></pre>
+
+  <script>
+    async function upload() {
+      const file = document.getElementById("fileInput").files[0];
+      const formData = new FormData();
+      formData.append("file", file);
+
+      const response = await fetch(
+        "https://face-verification-api-i2sz.onrender.com/detect-face",
+        {
+          method: "POST",
+          body: formData
+        }
+      );
+
+      const data = await response.json();
+      document.getElementById("result").innerText =
+        JSON.stringify(data, null, 2);
+    }
+  </script>
+</body>
+</html>
