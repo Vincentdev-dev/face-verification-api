@@ -75,6 +75,8 @@ async def register_face(file: UploadFile = File(...)):
 async def verify_face(file: UploadFile = File(...)):
     global known_face
 
+    print("Known face is:", known_face is not None)
+
     if known_face is None:
     return {
         "error": "No face registered. Please register first."
