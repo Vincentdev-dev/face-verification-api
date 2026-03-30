@@ -8,14 +8,24 @@ app = FastAPI()
 def home():
     return {"status": "AI server running"}
 
-@app.post("/capture-frame")
-async def capture_frame(file: UploadFile = File(...)):
+@app.post("/detect-face")
+async def detect_face(file: UploadFile = File(...)):
     contents = await file.read()
     
     nparr = np.frombuffer(contents, np.uint8)
     img = cv2.imdecode(nparr, cv2.IMREAD_COLOR)
 
     if img is None:
-        return {"status": "error"}
+        return {"status": "error", "message": "Invalid image"}
 
-    return {"status": "frame_received"}
+    gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
+
+    face_cascade = cv2.CascadeClassifier(
+        cv2.data.haarcascades + "haarcascade_frontalface_default.xml"
+    )
+
+    faces = face_cascade.detectMultiScale(gray, 1.3, 5)
+
+    return {
+        "faces_detected": len(faces)
+    }
