@@ -4,6 +4,7 @@ import cv2
 import numpy as np
 
 app = FastAPI()
+
 known_face = None
 
 app.add_middleware(
@@ -44,4 +45,59 @@ async def detect_face(file: UploadFile = File(...)):
     return {
         "faces_detected": len(faces),
         "status": "verified" if len(faces) > 0 else "no_face"
+    }
+    
+@app.post("/register-face")
+async def register_face(file: UploadFile = File(...)):
+    global known_face
+
+    contents = await file.read()
+    nparr = np.frombuffer(contents, np.uint8)
+    img = cv2.imdecode(nparr, cv2.IMREAD_COLOR)
+
+    gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
+
+    faces = face_cascade.detectMultiScale(gray, 1.3, 5)
+
+    if len(faces) == 0:
+        return {"status": "no_face"}
+
+    (x, y, w, h) = faces[0]
+    face = gray[y:y+h, x:x+w]
+
+    face = cv2.resize(face, (100, 100))
+
+    known_face = face
+
+    return {"status": "face_registered"}
+
+@app.post("/verify-face")
+async def verify_face(file: UploadFile = File(...)):
+    global known_face
+
+    if known_face is None:
+        return {"status": "no_registered_face"}
+
+    contents = await file.read()
+    nparr = np.frombuffer(contents, np.uint8)
+    img = cv2.imdecode(nparr, cv2.IMREAD_COLOR)
+
+    gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
+
+    faces = face_cascade.detectMultiScale(gray, 1.3, 5)
+
+    if len(faces) == 0:
+        return {"status": "no_face"}
+
+    (x, y, w, h) = faces[0]
+    face = gray[y:y+h, x:x+w]
+
+    face = cv2.resize(face, (100, 100))
+
+    diff = np.mean((known_face - face) ** 2)
+    similarity = 1 / (1 + diff)
+
+    return {
+        "match": similarity > 0.5,
+        "confidence": float(similarity)
     }
