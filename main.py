@@ -4,6 +4,7 @@ import cv2
 import numpy as np
 
 app = FastAPI()
+known_face = None
 
 app.add_middleware(
     CORSMiddleware,
