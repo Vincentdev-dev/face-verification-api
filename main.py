@@ -110,7 +110,7 @@ async def verify_face(file: UploadFile = File(...)):
         "confidence": float(similarity)
     }
 
-except Exception as e:
+    except Exception as e:
     return {
         "error": str(e)
     }
