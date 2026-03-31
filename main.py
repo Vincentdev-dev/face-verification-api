@@ -69,15 +69,15 @@ async def register_face(file: UploadFile = File(...)):
 
     face = cv2.resize(face, (100, 100))
 
-    known_face = face
+    cv2.imwrite("known_face.jpg", face)
 
     return {"status": "face_registered"}
 
 @app.post("/verify-face")
 async def verify_face(file: UploadFile = File(...)):
-    global known_face
 
-    print("Known face is:", known_face is not None)
+    # Load saved face from file
+    known_face = cv2.imread("known_face.jpg", cv2.IMREAD_GRAYSCALE)
 
     if known_face is None:
         return {
@@ -120,4 +120,4 @@ async def verify_face(file: UploadFile = File(...)):
     except Exception as e:
         return {
             "error": str(e)
-}
+        }
