@@ -78,8 +78,8 @@ async def verify_face(file: UploadFile = File(...)):
     print("Known face is:", known_face is not None)
 
     if known_face is None:
-    return {
-        "error": "No face registered. Please register first."
+       return {
+           "error": "No face registered. Please register first."
     }
 
     contents = await file.read()
@@ -99,20 +99,20 @@ async def verify_face(file: UploadFile = File(...)):
     face = cv2.resize(face, (100, 100))
 
     if known_face.shape != face.shape:
-    return {
-        "error": "Face size mismatch. Try same image."
+       return {
+          "error": "Face size mismatch. Try same image."
     }
 
-    try:
-    diff = np.mean((known_face - face) ** 2)
-    similarity = 1 / (1 + diff)
+ try:
+     diff = np.mean((known_face - face) ** 2)
+     similarity = 1 / (1 + diff)
 
-    return {
-        "match": similarity > 0.5,
-        "confidence": float(similarity)
+     return {
+         "match": similarity > 0.5,
+         "confidence": float(similarity)
     }
 
-    except Exception as e:
-    return {
-        "error": str(e)
+ except Exception as e:
+     return {
+         "error": str(e)
     }
