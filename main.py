@@ -5,8 +5,6 @@ import numpy as np
 
 app = FastAPI()
 
-known_face = None
-
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
@@ -24,9 +22,11 @@ face_cascade = cv2.CascadeClassifier(
     cv2.data.haarcascades + "haarcascade_frontalface_default.xml"
 )
 
+# -------------------- DETECT FACE --------------------
 @app.post("/detect-face")
 async def detect_face(file: UploadFile = File(...)):
     contents = await file.read()
+
     nparr = np.frombuffer(contents, np.uint8)
     img = cv2.imdecode(nparr, cv2.IMREAD_COLOR)
 
@@ -46,11 +46,11 @@ async def detect_face(file: UploadFile = File(...)):
         "status": "verified" if len(faces) > 0 else "no_face"
     }
 
+# -------------------- REGISTER FACE --------------------
 @app.post("/register-face")
 async def register_face(file: UploadFile = File(...)):
-    global known_face
-
     contents = await file.read()
+
     nparr = np.frombuffer(contents, np.uint8)
     img = cv2.imdecode(nparr, cv2.IMREAD_COLOR)
 
@@ -69,15 +69,24 @@ async def register_face(file: UploadFile = File(...)):
 
     face = cv2.resize(face, (100, 100))
 
-    cv2.imwrite("known_face.jpg", face)
+    try:
+        # Save to Render-safe directory
+        success = cv2.imwrite("/tmp/known_face.jpg", face)
 
-    return {"status": "face_registered"}
+        if not success:
+            return {"error": "Failed to save face"}
 
+        return {"status": "face_registered"}
+
+    except Exception as e:
+        return {"error": str(e)}
+
+# -------------------- VERIFY FACE --------------------
 @app.post("/verify-face")
 async def verify_face(file: UploadFile = File(...)):
 
-    # Load saved face from file
-    known_face = cv2.imread("known_face.jpg", cv2.IMREAD_GRAYSCALE)
+    # Load stored face
+    known_face = cv2.imread("/tmp/known_face.jpg", cv2.IMREAD_GRAYSCALE)
 
     if known_face is None:
         return {
@@ -120,4 +129,4 @@ async def verify_face(file: UploadFile = File(...)):
     except Exception as e:
         return {
             "error": str(e)
-        }
+    }
